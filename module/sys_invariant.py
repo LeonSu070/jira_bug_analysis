@@ -5,7 +5,7 @@ date_format = {
     "in_file": "%Y/%m/%d"
 }
 
-need_show_plot = False  # warning: variant
+need_show_plot = True  # warning: variant
 debug_against_oss = False    # warning: variant
 
 show_last_n_bars = -6

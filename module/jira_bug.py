@@ -16,8 +16,23 @@ def fetch_date_from_jira_cloud(basic_base64_token, sprint_start_date, start_at):
     online_bug_json = search_online_bug_in_json(basic_base64_token, search_uri)
     return online_bug_json
 
+def get_bug_reason(bug_fields, level_one_name, level_two_name, level_three_name):
+    if bug_fields[level_one_name] is None:
+        return None
+    if bug_fields[level_one_name][level_two_name] is None:
+        return None
+    str_re = str()
+    for c in bug_fields[level_one_name][level_two_name]:
+        if c[level_three_name] is None:
+            continue
+        for str1 in c[level_three_name]:
+            if 'text' in str1:
+                str_re += str1['text'] + "\n" 
+    return str_re
 
 def bug_details(bug_dict, bug_fields, fields):
+    bug_dict['summary'] = bug_fields['summary']
+    bug_dict['reason'] = get_bug_reason(bug_fields, fields["Bug Reason"], "content", "content");
     bug_dict["priority"] = get_value_in_level_two(bug_fields, "priority", "name")
     bug_dict["assignee"] = get_value_in_level_two(bug_fields, "assignee", "name")
     bug_dict["status"] = get_value_in_level_two(bug_fields, "status", "name")
