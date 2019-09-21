@@ -54,7 +54,7 @@ def search_online_bug_in_json(base64_api_token, jql_uri=""):
     uri = "/rest/api/3/search?" + jql_uri
     print("search bug from " + uri)
     response = get_response(base64_api_token, uri)
-    debug_log_console(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
+    #debug_log_console(json.dumps(json.loads(response.text), sort_keys=True, indent=4, separators=(",", ": ")))
     return json.loads(response.text)
 
 

@@ -7,8 +7,8 @@ from module.pyplot_util import bug_data_and_label_classified_in_catalog
 from module.storage_util import *
 from module.sys_invariant import date_format, show_last_n_bars, get_online_bug_summary_png_filename, \
     get_sprint_bug_summary_filename, online_bug_priority_png, online_bug_classification_png, \
-    online_bug_unclassified_png, online_bug_source_in_csv
-
+    online_bug_unclassified_png, online_bug_source_in_csv, online_bug_team_png
+from pprint import pprint
 
 def store_count_into_file(sprint_bug_summary_filename, last_sprint_bugs_count, sprint_start_date):
     file_backup(sprint_bug_summary_filename)
@@ -43,6 +43,15 @@ def generate_online_bug_summary_chart(sprint_bug_summary_json, filename):
     debug_log_console(dates)
     return generate_bar_chart(dates, counts, filename)
 
+def generate_online_bug_summary_chart_pro(sprint_bug_summary_json, filename):
+    dates, counts = convert_summary_into_dates_and_counts(sprint_bug_summary_json)
+    debug_log_console(dates)
+    colors = {
+                'Wrong Reported':'purple',
+                'Others':'blue',
+            }
+    return generate_barsuperpose_chart(dates, counts, colors, "Online Bug Summary", filename)
+
 
 def convert_summary_into_dates_and_counts(sprint_bug_summary_json):
     dates = []
@@ -67,6 +76,7 @@ def generate_bug_summary_barchart(bug_list):
         return None
     # generate chart
     return generate_online_bug_summary_chart(sprint_bug_summary_json, get_online_bug_summary_png_filename())
+
 
 
 def get_bug_list(basic_base64_token):
@@ -112,6 +122,22 @@ def generate_bug_unclassified_piechart(bug_list):
     return generate_pie_chart(unclassified_label, unclassified_data, online_bug_unclassified_png, "Unclassified")
 
 
+def generate_bug_team_barchart(bug_list):
+    team_data, team_label = bug_data_and_label_classified_in_catalog_pro(bug_list, 'bug classify', 'scrum team')
+
+    debug_log_console(str(team_data))
+    debug_log_console(str(team_label))
+    colors = {
+                'Wrong Reported':'purple',
+                'Others':'yellow',
+                'Fore-End':'blue',
+                'Product Logic':'orange',
+                'Server':'green',
+                'Third Part':'red'
+            }
+    return generate_barsuperpose_chart(team_label, team_data, colors, "Team bugs", online_bug_team_png)
+
+
 def write_bug_list_to_csv(bug_list):
     if bug_list.bugs[0] is None:
         return
@@ -143,9 +169,13 @@ def do_bug_analysis():
     unclassified_piechart = generate_bug_unclassified_piechart(bug_list)
     debug_log_console("unclassified pie chart filename generated")
 
+    # No.5 graphic - bug team
+    team_barchart = generate_bug_team_barchart(bug_list)
+    debug_log_console("team bug chart filename generated")
+
     online_bug_source = write_bug_list_to_csv(bug_list)
-    debug_log_console(online_bug_source.decode("utf-8"))
+    #debug_log_console(online_bug_source.decode("utf-8"))
 
     # final step - compose and send email
-    graphics = [summary_barchart, priority_barchart, classification_piechart, unclassified_piechart]
+    graphics = [summary_barchart, priority_barchart, classification_piechart, team_barchart, unclassified_piechart]
     send_email_from_graphics(graphics, online_bug_source)
