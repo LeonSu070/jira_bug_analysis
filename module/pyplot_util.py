@@ -20,10 +20,11 @@ def save_to_mime_img(filename):
     return binary_img
 
 
-def generate_bar_chart(label, data, filename=None):
+def generate_bar_chart(label, data, data2, filename=None):
     ind = np.arange(len(data))
     fig, ax = plt.subplots()
     rects = ax.bar(ind, data, width=0.5)
+    rects_2 = ax.bar(ind, data2, width=0.5)
 
     ax.set_title('Online Bug Summary')
     ax.set_ylabel("Count", fontsize=8)
@@ -33,6 +34,11 @@ def generate_bar_chart(label, data, filename=None):
     highest = max(data)
     for rect, i in zip(rects, data):
         ax.text(rect.get_x() + rect.get_width() / 2, i + highest * 0.02, str(i), color='black', ha='center',
+                fontweight='bold', fontsize=8)
+       
+    for rect, i in zip(rects_2, data2):
+        if i :
+            ax.text(rect.get_x() + rect.get_width() / 2, i/2, str(i), color='black', ha='center',
                 fontweight='bold', fontsize=8)
     return save_to_mime_img(filename)
 

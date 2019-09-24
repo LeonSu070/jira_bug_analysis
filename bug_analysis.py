@@ -10,73 +10,79 @@ from module.sys_invariant import date_format, show_last_n_bars, get_online_bug_s
     online_bug_unclassified_png, online_bug_source_in_csv, online_bug_team_png
 from pprint import pprint
 
-def store_count_into_file(sprint_bug_summary_filename, last_sprint_bugs_count, sprint_start_date):
+def store_count_into_file(sprint_bug_summary_filename, last_sprint_bugs_count, tech_bug_amount, sprint_start_date):
     file_backup(sprint_bug_summary_filename)
     sprint_online_bug_summary_json_data = read_json_from_file(sprint_bug_summary_filename)
     if sprint_online_bug_summary_json_data is "":
         return ""
-    sprint_online_bug_summary_json_data = append_latest_sprint_info(last_sprint_bugs_count,
+    sprint_online_bug_summary_json_data = append_latest_sprint_info(last_sprint_bugs_count, tech_bug_amount, 
                                                                     sprint_online_bug_summary_json_data,
                                                                     sprint_start_date)
+    pprint(sprint_online_bug_summary_json_data)
     write_json_obj_to_file(sprint_bug_summary_filename, sprint_online_bug_summary_json_data)
     return sprint_online_bug_summary_json_data
 
 
-def append_latest_sprint_info(last_sprint_bugs_count, sprint_online_bug_summary_json_data, sprint_start_date):
+def append_latest_sprint_info(last_sprint_bugs_count, tech_bug_amount, sprint_online_bug_summary_json_data, sprint_start_date):
     debug_log_console(str(sprint_online_bug_summary_json_data))
     is_updated = False
     sprint_start_date_str = datetime.datetime.strftime(sprint_start_date, date_format["in_file"])
     for sprint_summary in sprint_online_bug_summary_json_data:
         if sprint_summary["sprint date"] == sprint_start_date_str:
             sprint_summary["sprint bug count"] = last_sprint_bugs_count
+            sprint_summary["tech bug count"] = tech_bug_amount
             is_updated = True
             break
     if not is_updated:
         sprint_online_bug_summary_json_data.append(
             {"sprint date": sprint_start_date_str,
-             "sprint bug count": last_sprint_bugs_count})
+             "sprint bug count": last_sprint_bugs_count,
+             "tech bug count": tech_bug_amount})
     return sprint_online_bug_summary_json_data
 
 
 def generate_online_bug_summary_chart(sprint_bug_summary_json, filename):
-    dates, counts = convert_summary_into_dates_and_counts(sprint_bug_summary_json)
+    dates, counts, counts_2 = convert_summary_into_dates_and_counts(sprint_bug_summary_json)
     debug_log_console(dates)
-    return generate_bar_chart(dates, counts, filename)
-
-def generate_online_bug_summary_chart_pro(sprint_bug_summary_json, filename):
-    dates, counts = convert_summary_into_dates_and_counts(sprint_bug_summary_json)
-    debug_log_console(dates)
-    colors = {
-                'Wrong Reported':'purple',
-                'Others':'blue',
-            }
-    return generate_barsuperpose_chart(dates, counts, colors, "Online Bug Summary", filename)
-
+    return generate_bar_chart(dates, counts, counts_2, filename)
 
 def convert_summary_into_dates_and_counts(sprint_bug_summary_json):
     dates = []
     counts = []
-
+    counts_2 = []
     for sprint_bug in sprint_bug_summary_json:
         dates.append(sprint_bug["sprint date"])
         counts.append(sprint_bug["sprint bug count"])
-    return dates[show_last_n_bars:], counts[show_last_n_bars:]
+        if "tech bug count" in sprint_bug :
+            counts_2.append(sprint_bug["tech bug count"])
+        else:
+            counts_2.append(0)
+    return dates[show_last_n_bars:], counts[show_last_n_bars:], counts_2[show_last_n_bars:]
 
+def get_tech_bug_amount(last_sprint_bugs):
+    amount = 0
+    for bug in last_sprint_bugs:
+        if bug['bug classify'] != "Wrong Reported" :
+            amount = amount + 1
+    return amount
 
 def generate_bug_summary_barchart(bug_list):
     # find the latest sprint bugs
     last_sprint_bugs, sprint_start_date = get_the_last_sprint_bugs(bug_list)
     debug_log_console(str(sprint_start_date))
+    
+    #get tech bug amount
+    tech_bug_amount = get_tech_bug_amount(last_sprint_bugs)
 
     # store the count into file
-    sprint_bug_summary_json = store_count_into_file(get_sprint_bug_summary_filename(), len(last_sprint_bugs),
+    sprint_bug_summary_json = store_count_into_file(get_sprint_bug_summary_filename(), len(last_sprint_bugs), tech_bug_amount,
                                                     sprint_start_date)
 
     if sprint_bug_summary_json is "":
         return None
+
     # generate chart
     return generate_online_bug_summary_chart(sprint_bug_summary_json, get_online_bug_summary_png_filename())
-
 
 
 def get_bug_list(basic_base64_token):
